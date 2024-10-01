@@ -39,10 +39,10 @@ def mark_attendance(person_name):
             date_string = now.strftime('%H:%M:%S')
             f.writelines(f'\n{person_name},{date_string}')
 
-cap = cv2.VideoCapture(0)
+webcam_feed = cv2.VideoCapture(0)
 
 while True:
-    success, frame = cap.read()
+    success, frame = webcam_feed.read()
     frame_resized = cv2.resize(frame,(0,0),None,0.25,0.25)
     frame_resized = cv2.cvtColor(frame_resized,cv2.COLOR_BGR2RGB)
 
