@@ -5,20 +5,21 @@
 # Not yet official, add a functionality to let the user upload his/her own picture
 
 import cv2
-import numpy as np
+import numpy as nps
 import face_recognition
 from datetime import datetime
 import os
 from tkinter import filedialog
 from tkinter import *
 import shutil
+import sys
 
 
 images_list = []
 image_names = []
 
 def upload_image():
-    file_path = filedialog.askopenfilename(title = "Upload your image",filetypes = (("jpg files","*jpg"),("all files","*.*")))
+    file_path = filedialog.askopenfilename(title = "Select image: Make sure it's named accordingly",filetypes = (("jpg files","*jpg"),("all files","*.*")))
     if file_path:
         # Copy the file to the attendance_images directory
         image_name = os.path.basename(file_path)
@@ -35,8 +36,16 @@ def upload_image():
         images_list.append(rgb_image)
         image_names.append(os.path.splitext(image_name)[0])
         print(f"Uploaded and processed image: {image_name}")
-        print("The program will automatically refresh. Restart the program")
-        quit()
+
+        user_option = input("Do you want to add more image? (press 'y' to add; any key to exit): ")
+        if user_option.lower() == 'y':
+            window = Tk()
+            window.withdraw()  # Hides the Tkinter window for better visual appearance
+            upload_image()
+            window.mainloop()
+        else:
+            print("The program will automatically refresh. Restart the program")
+            quit()
 
 def activate_face_recognition():
     print("Face recognition activating...\nPlease wait")
@@ -46,8 +55,14 @@ def activate_face_recognition():
         encode_list = []
         for image in images:
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            encode = face_recognition.face_encodings(image)[0]
-            encode_list.append(encode)
+            # The idea for the encoding error handling is from stackoverflow: https://stackoverflow.com/questions/59919993/indexerror-list-index-out-of-range-face-recognition
+            try:
+                encoded_image = face_recognition.face_encodings(image)[0]
+                encode_list.append(encoded_image)
+            except IndexError:
+                print("Warning: No face detected in one of the images.\nSol: use another image")
+                continue
+
         return encode_list
 
     encode_known_list = find_encodings(images_list)
@@ -83,7 +98,7 @@ def activate_face_recognition():
             matches = face_recognition.compare_faces(encode_known_list,encode_the_face)
             similarity_score = face_recognition.face_distance(encode_known_list,encode_the_face)
             print(similarity_score)
-            match_index = np.argmin(similarity_score)
+            match_index = nps.argmin(similarity_score)
             
             # Frames the camera feed when the person matched an existing image within the program's directory
             if matches[match_index]:
