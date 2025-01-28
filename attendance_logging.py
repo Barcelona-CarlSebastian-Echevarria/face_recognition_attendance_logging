@@ -12,8 +12,6 @@ import os
 from tkinter import filedialog
 from tkinter import *
 import shutil
-import sys
-
 
 images_list = []
 image_names = []
@@ -46,6 +44,10 @@ def upload_image():
         else:
             print("The program will automatically refresh. Restart the program")
             quit()
+
+    if not file_path:
+        print("No file selected. Cancelling image upload.")
+        return None
 
 def activate_face_recognition():
     print("Face recognition activating...\nPlease wait")
