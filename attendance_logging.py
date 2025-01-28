@@ -45,9 +45,13 @@ def upload_image():
             print("The program will automatically refresh. Restart the program")
             quit()
 
-    if not file_path:
-        print("No file selected. Cancelling image upload.")
-        return None
+    if not file_path:     
+        functionality_option = input("Image upload cancelled\nDo you want to proceed to face recognition? (y/n): ")
+        if functionality_option.lower() == 'y':
+            activate_face_recognition()
+        else:
+            print("Exiting the program.")
+            quit()
 
 def activate_face_recognition():
     print("Face recognition activating...\nPlease wait")
@@ -88,7 +92,7 @@ def activate_face_recognition():
     # Processes the webcam feed for identifying person and logging in the CSV file
     while True:
         success, frame = webcam_feed.read()
-        # Resizes the images to 25%
+        # # Resizes the images to 25%
         frame_resized = cv2.resize(frame,(0,0),None,0.25,0.25)
         frame_resized = cv2.cvtColor(frame_resized,cv2.COLOR_BGR2RGB)
         faces_in_current_frame = face_recognition.face_locations(frame_resized)
@@ -114,9 +118,19 @@ def activate_face_recognition():
                 cv2.putText(frame,name,(x1+6, y2-6),cv2.FONT_HERSHEY_COMPLEX,1,(255,255,255),2)
                 # Mark the attendance of the person in the CSV file
                 mark_attendance(name)
-
+        
         cv2.imshow('Webcam',frame)
-        cv2.waitKey(1)
+ 
+        # Terminating feature idea was derived from https://discuss.codingblocks.com/t/program-is-not-terminating/32257/5
+        terminate_key = cv2.waitKey(1) & 0xFF
+        if terminate_key == ord('q'):
+            print("Terminating...")
+            break
+
+    # Release the webcam and close any open windows
+    cv2.destroyAllWindows()
+    webcam_feed.release()
+    print("Exited face recogntion. Proceed to the CSV file ot to the next program")
 
 # Coordinates all the functionalities of the program
 def main():
@@ -129,16 +143,19 @@ def main():
         images_list.append(current_image)
         image_names.append(os.path.splitext(file)[0])
     print(f"Existing image profiles: {image_names}")
-    print("If your name isn't on the list please, please add your image; otherwise, proceed to the program")
+    print("If your name isn't on the list please\n 1) Add your image; otherwise,\n 2) Proceed to the program")
 
-    user_input = input("Do you want to add your own image (press 'y' to add; any key to proceed in attendance logging): ")
-    if user_input.lower() == 'y':
+    user_input = input("Press the corresponding number of the option to proceed (1 or 2): ")
+    if user_input == '1':
         window = Tk()
         window.withdraw()  # Hides the Tkinter window for better visual appearance
         upload_image()
         window.mainloop()
-    else:
+    elif user_input == '2':
         activate_face_recognition()
+    else:
+        print("please respond using only the specified")
+        
 
 main()
 
