@@ -214,11 +214,43 @@ def user_age():
         except ValueError:
             print("Enter a numerical input only")
 
+# Prompts the user to enter their contact NUM. for profiling
+def user_contact_number():
+    while True:
+        try:
+            user_number = int(input("Enter your contact number (input must be 10 characters only): +63|"))
+            user_number = str(user_number)
+            if user_number.isdigit() and len(user_number) == 10:
+                  return f"+63{user_number}"
+            else:
+                  print("Please enter a valid contact number")
+        except ValueError:
+            print("Enter a numerical input only")
+
+# Prompts the user to classify their socioeconomic class
+def user_socioeconomic_class():
+    classes = ["Upper Class", "Upper Middle Class", "Middle Class", "Lower Middle Class", "Working Class", "Lower Class"]
+    print("Choose your socio-economic class from the following list:")
+    for index, socio_class in enumerate(classes):
+        print(f"{index + 1}. {socio_class}")
+
+    while True:
+        user_class = int(input("Press 1-6 to choose your socio-economic class: "))
+        if user_class not in range(1, 7):
+            print("Please enter a valid number from the list.")
+        else:
+            for index, value in enumerate(classes):
+              if user_class == index + 1:
+               return f"{value}"
+
+
 # Formats the input of the user within a txt file
 def text_format():
     name = user_full_name()
     age = user_age()
-    return f"Name: {name} | Age: {age}"
+    contact_num = user_contact_number
+    socioeconomic_status = user_socioeconomic_class()
+    return f"Name: {name} | Age: {age} | Contact Number: {contact_num} | Socioeconomic Status: {user_socioeconomic_class}"
 
 # Creates a txt file
 def create_file_name():
