@@ -44,7 +44,7 @@ def upload_image_security():
             print(f"Wrong passcode. Attempts remaining: {available_attempts}")
 
         if available_attempts == 0:
-            print("No more attempts left. Try again later.")
+            "No attempts left. Try again later. Returning to main menu..."
             # Added a timer before the user can proceed to try again
             time.sleep(3)
             main()  
@@ -89,6 +89,7 @@ def upload_image():
 
 def activate_face_recognition():
     print("Face recognition activating...\nPlease wait")
+    match_found = False # Will be used to determine if the user can view the information logged in
     
     # Encodes each images and convert it into RGB format. Note: RGB is the only type face recognition module can read and process
     def find_encodings(images):
@@ -152,6 +153,7 @@ def activate_face_recognition():
                 cv2.putText(frame,name,(x1+6, y2-6),cv2.FONT_HERSHEY_COMPLEX,1,(255,255,255),2)
                 # Mark the attendance of the person in the CSV file
                 mark_attendance(name)
+                match_found = True
         
         cv2.imshow('Webcam',frame)
  
@@ -159,14 +161,15 @@ def activate_face_recognition():
         terminate_key = cv2.waitKey(1) & 0xFF
         if terminate_key == ord('q'):
             print("Terminating...")
-            break
-
-    # Release the webcam and close any open windows
-    cv2.destroyAllWindows()
-    webcam_feed.release()
-
-    print("Exited face recogntion. Attendance logged in successfully\n Going back to main menu...")
-    main()
+            print("Exited face recogntion. Attendance logged in successfully\n Going back to main menu...")
+            # Release the webcam and close any open windows
+            cv2.destroyAllWindows()
+            webcam_feed.release()
+            main()
+        elif terminate_key == ord('p'):
+            cv2.destroyAllWindows()
+            webcam_feed.release()
+            return match_found
 
 # Prompts the user to enter their full name for profiling
 def user_full_name():
@@ -266,6 +269,58 @@ def txt_editing_functionality():
     
     main()
 
+# Allows the user to view the information logged in; user has to be logged in to the attendance.csv first
+def file_viewer():
+    print("Verification is needed in order to access user information logged in the program\n"
+          "Two verification options are available:\n"
+          "1. Input the image name you used in the image directory?\n"
+          "2. Initiate a face recognition scan?")
+
+    access_attempts = 3
+    while access_attempts > 0:
+        user_response = input("Which option do you like? Enter its corresponding number (press 'n' to go back to main menu): ")
+        if user_response.lower() == "n":
+            print("Returning to main menu...")
+            main()
+        elif user_response == "1":
+            data = []
+            file_csv = "attendance.csv"
+            try:
+                with open(file_csv, 'r') as f:
+                    data = [line[0] for line in csv.reader(f)]
+
+                    while access_attempts > 0:
+                        picture_name = input("Please enter the name of your image in the attendance images directory: ")
+                        if picture_name in data:
+                            print("Access granted")
+                            # Insert function here
+                        else:
+                            access_attempts -= 1
+                            print(f"ACCESS DENIED\nNotice: Name not logged in the attendance.csv file\nAccess attempts remaining: {access_attempts}")
+
+                            if access_attempts == 0:
+                                print("No attempts left. Try again later. Returning to main menu...")
+                                time.sleep(3)
+                                main()
+            except FileNotFoundError:
+                print(f"Error: The file {file_csv} could not be found.")
+        elif user_response == "2":
+            print("IMPORTANT: Press p to terminate")
+            time.sleep(5)
+            verdict = activate_face_recognition()
+            if verdict:
+                print("Access granted")
+                # Insert function here
+            if not verdict:
+                access_attempts -= 1
+                print(f"ACCESS DENIED\nFace not recognized\nAccess attempts remaining: {access_attempts}")
+                if access_attempts == 0:
+                   print("No attempts left. Try again later. Returning to main menu...")
+                   time.sleep(3)
+                   main()
+        else:
+            print("Invalid input. Please select either '1', '2', or 'n'")
+
 # Coordinates all the functionalities of the program
 def main():
     print("WELCOME! THIS IS A FACE RECOGNITION AND FILE MANAGEMENT PROGRAM")
@@ -289,11 +344,13 @@ def main():
         if user_input == '1':
             upload_image_security()
         elif user_input == '2':
+            print("IMPORTANT: Press q once done to terminate")
+            time.sleep(5)
             activate_face_recognition()
         elif user_input == '3':
             txt_editing_functionality()
         elif user_input == '4':
-            pass
+            file_viewer()
         elif user_input == '5':
             print("User exited the program")
             quit()
