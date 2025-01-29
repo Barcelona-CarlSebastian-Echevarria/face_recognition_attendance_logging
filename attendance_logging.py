@@ -24,7 +24,16 @@ import string
 import time
 
 images_list, image_names, file_list  = [], [], []
+
+# Gives a rundown of the existing profiles within the directory (This is the original component of the first project)
 file_csv = "attendance.csv"
+path = 'attendance_images'
+my_list = os.listdir(path)
+for file in my_list:
+    current_image = cv2.imread(f'{path}/{file}')
+    images_list.append(current_image)
+    image_names.append(os.path.splitext(file)[0])
+print(f"Directory profiles (Inputted directly into the system): {image_names}")
 
 # Idea for this function is from YT and was tailored to the neeeds of the program
 def upload_image_security():
@@ -120,16 +129,16 @@ def activate_face_recognition():
   
     # Structures and log user informations in the CSV file specified
     def mark_attendance(person_name):
-        header_list = ['Name', 'Time']
-        name_list = []
-        with open('attendance.csv', 'w', newline='') as f:
-            writer = csv.DictWriter(f, delimiter=',', fieldnames=header_list)
-            writer.writeheader()
+     with open('Attendance.csv', 'r+') as f:
+            my_data_list = f.readlines()
+            name_list = []
+            for line in my_data_list:
+                entry = line.split(',')
+                name_list.append(entry[0])
             if person_name not in name_list:
                 now = datetime.now()
                 date_string = now.strftime('%H:%M:%S')
-                name_list.append(person_name)
-                writer.writerow({'Name': person_name, 'Time': date_string})
+                f.writelines(f'\n{person_name},{date_string}')
 
     webcam_feed = cv2.VideoCapture(0)
 
@@ -214,7 +223,7 @@ def user_age():
         except ValueError:
             print("Enter a numerical input only")
 
-# Prompts the user to enter their contact NUM. for profiling
+# Prompts the user to enter their contact num. for profiling
 def user_contact_number():
     while True:
         try:
@@ -248,9 +257,9 @@ def user_socioeconomic_class():
 def text_format():
     name = user_full_name()
     age = user_age()
-    contact_num = user_contact_number
+    contact_num = user_contact_number() 
     socioeconomic_status = user_socioeconomic_class()
-    return f"Name: {name} | Age: {age} | Contact Number: {contact_num} | Socioeconomic Status: {user_socioeconomic_class}"
+    return f"Name: {name} | Age: {age} | Contact Number: {contact_num} | Socioeconomic Status: {socioeconomic_status}"
 
 # Creates a txt file
 def create_file_name():
@@ -310,11 +319,10 @@ def txt_editing_functionality():
             file_name = create_file_name()
             file_list.append(file_name) 
             print(f"New file: '{file_name}.txt' will be used.")
-    
     main()
 
-# Opens the inputted txt file and let's the user view all its contents
-def file_viewer_functionality():
+# Assigns where will the file_viewer_functionality will read
+def file_viewer_assignment():
     if len(file_list) == 0:
         print("No file has been added yet. Go to file editor first. Sending you to main menu")
         main()
@@ -340,19 +348,28 @@ def file_viewer_functionality():
                 main()
             else:
                 print("Invalid input. Please enter a valid number or filename.")
-   
-    open_file = f"{view_file}.txt"
+
+        return view_file
+
+# Opens the inputted txt file and let's the user view all its contents
+def file_viewer_functionality():
+    name_file = file_viewer_assignment()
+    print("Important: The user will have no option but to return to main menu after the information was displayed")
+    open_file = f"{name_file}.txt"
     try:
         with open(open_file, "r") as f:
-            # Realized by using enumerate, you don't have to use readline()
-            for row_number, row_contents in enumerate(f, 1): # The "1" here is used to start the counting in index 1 
-                print("Important: System will automatically return to main menu after displaying the information")
-                time.sleep(3)
+            file_contents = f.readlines()
+            for row_number, row_contents in enumerate(file_contents, 1):
                 print(f"{row_number}: {row_contents.strip()}")
-                time.sleep(3)
-                return main()
+                
+            forced_exit = input("Enter 'n' to return to main menu. Note: You have to restart the whole process again to view file: ").lower()
+            if forced_exit == 'n':
+                main()
+            else:
+                print("Please enter only the letter 'n'")
     except FileNotFoundError:
         print(f"Error: {open_file} not found")
+
 
 # Give the user attempts to access the information logged in; user has to be logged in to the attendance.csv first
 def file_viewer_security():
@@ -376,7 +393,7 @@ def file_viewer_security():
                     data = [line[0] for line in csv.reader(f)]
 
                     while access_attempts > 0:
-                        picture_name = input("Please enter the name of your image in the attendance images directory: ")
+                        picture_name = input("Please enter the name of your image in the attendance images directory: ").upper()
                         if picture_name in data:
                             print("Access granted")
                             return file_viewer_functionality()
@@ -406,19 +423,11 @@ def file_viewer_security():
                    main()
         else:
             print("Invalid input. Please select either '1', '2', or 'n'")
-        
 
 # Coordinates all the functionalities of the program
 def main():
+    print(f"Existing Profiles: {image_names}")  # Reviews the images in the attendance_image directory
     print("WELCOME! THIS IS A FACE RECOGNITION AND FILE MANAGEMENT PROGRAM")
-    # Reviews the images in the attendance_image directory
-    path = 'attendance_images'
-    my_list = os.listdir(path)
-    for file in my_list:
-        current_image = cv2.imread(f'{path}/{file}')
-        images_list.append(current_image)
-        image_names.append(os.path.splitext(file)[0])
-    print(f"Existing image profiles: {image_names}")
     print("Please choose an option:\n"
       "1) If your name isn't on the list: Add your image.\n"
       "2) if your name is on the list: Proceed to face recognition.\n"
@@ -432,7 +441,7 @@ def main():
             upload_image_security()
         elif user_input == '2':
             print("IMPORTANT: Press q once done to terminate")
-            time.sleep(5)
+            time.sleep(2)
             activate_face_recognition()
         elif user_input == '3':
             txt_editing_functionality()
