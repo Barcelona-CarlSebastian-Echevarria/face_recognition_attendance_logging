@@ -19,6 +19,41 @@ import time
 
 images_list, image_names, profiles_list, file_list  = [], [], [], []
 
+# Idea for this function is from YT and was tailored to the neeeds of the program
+def upload_image_security():
+    upper_case_letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    lower_case_letter = upper_case_letters.lower()
+    numbers = "".join(random.choices(string.digits, k=3)) 
+    special_symbols = "!@#$%^&*()_-><|/?:."
+    # Combine all parts, then shuffles it for maximum randomness
+    passcode = upper_case_letters + lower_case_letter + numbers + special_symbols
+    passcode_list = list(passcode)
+    random.shuffle(passcode_list)
+    # Limit the passcode into five characters
+    official_passcode = "".join(random.sample(passcode_list, 5))
+
+    available_attempts = 3 
+    while available_attempts > 0:
+        print(f"Please type in the given passcode: | {official_passcode} | to add your image to the directory")
+        user_passcode_attempt = input("Enter the passcode: ")
+        if user_passcode_attempt == official_passcode:
+            print("Access granted")
+            break 
+        else:
+            available_attempts -= 1
+            print(f"Wrong passcode. Attempts remaining: {available_attempts}")
+
+        if available_attempts == 0:
+            print("No more attempts left. Try again later.")
+            # Added a timer before the user can proceed to try again
+            time.sleep(3)
+            main()  
+
+    window = Tk()
+    window.withdraw()  # Hide Tkinter window for better appearance
+    upload_image()
+    window.mainloop() 
+
 def upload_image():
     file_path = filedialog.askopenfilename(title = "Select image: Make sure it's named accordingly",filetypes = (("jpg files","*jpg"),("all files","*.*")))
     if file_path:
@@ -204,50 +239,32 @@ def txt_editing_functionality():
     file_name = create_file_name()
     # Temporarily stores the name of the txt file
     file_list.append(file_name)
-    with open(f"{file_name}.txt", "a") as file:
-        file.write(text_format())
 
-        while True:
-            user_option = input("Do you want to add more information?\n Press 'y' to proceed\n Press any key to go to main menu): ")
-            if user_option == 'y':
-                file.write(f"\n{text_format()}")
-            else:
-                main()
+    while True:
+        with open(f"{file_name}.txt", "a") as file:
+            file.write(text_format())
 
-# Idea for this function is from YT and was tailored to the neeeds of the program
-def access_security():
-    upper_case_letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    lower_case_letter = upper_case_letters.lower()
-    numbers = "".join(random.choices(string.digits, k=3)) 
-    special_symbols = "!@#$%^&*()_-><|/?:."
-    # Combine all parts, then shuffles it for maximum randomness
-    passcode = upper_case_letters + lower_case_letter + numbers + special_symbols
-    passcode_list = list(passcode)
-    random.shuffle(passcode_list)
-    # Limit the passcode into five characters
-    official_passcode = "".join(random.sample(passcode_list, 5))
-
-    available_attempts = 3 
-    while available_attempts > 0:
-        print(f"Please type in the given passcode: | {official_passcode} | to add your image to the directory")
-        user_passcode_attempt = input("Enter the passcode: ")
-        if user_passcode_attempt == official_passcode:
-            print("Access granted")
-            break 
+            while True:
+                user_option = input("Do you want to add more information?\n Press 'y' to proceed\n Press 'n' to opt not to): ").lower()
+                if user_option == 'y':
+                    file.write(f"\n{text_format()}")
+                elif user_option == 'n':
+                    break
+                else:
+                    print("Please respond using only the specified")
+            
+        reuse_option = input(f"Do you want to keep using the file '{file_name}.txt' (press 'y' or 'n'); or\nCreate a new one (press any key)? ").lower()
+        if reuse_option == 'y':
+            continue 
+        elif reuse_option == 'n':
+            print("Going back to main menu...")
+            break
         else:
-            available_attempts -= 1
-            print(f"Wrong passcode. Attempts remaining: {available_attempts}")
-
-        if available_attempts == 0:
-            print("No more attempts left. Try again later.")
-            # Added a timer before the user can proceed to try again
-            time.sleep(3)
-            main()  
-
-    window = Tk()
-    window.withdraw()  # Hide Tkinter window for better appearance
-    upload_image()
-    window.mainloop() 
+            file_name = create_file_name()
+            file_list.append(file_name) 
+            print(f"New file: '{file_name}.txt' will be used.")
+    
+    main()
 
 # Coordinates all the functionalities of the program
 def main():
@@ -270,7 +287,7 @@ def main():
     while True:
         user_input = input("Press the corresponding number of the option to proceed (1 or 4): ")
         if user_input == '1':
-            access_security()
+            upload_image_security()
         elif user_input == '2':
             activate_face_recognition()
         elif user_input == '3':
