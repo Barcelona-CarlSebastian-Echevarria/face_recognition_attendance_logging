@@ -14,8 +14,7 @@ from tkinter import *
 import shutil
 import csv
 
-images_list = []
-image_names = []
+images_list, image_names, profiles_list, file_list  = [], [], [], []
 
 def upload_image():
     file_path = filedialog.askopenfilename(title = "Select image: Make sure it's named accordingly",filetypes = (("jpg files","*jpg"),("all files","*.*")))
@@ -25,36 +24,30 @@ def upload_image():
         new_path = os.path.join("attendance_images", image_name)
         # The idea to use the shutil in copying files to a directory was derived from Stackoverflow: https://stackoverflow.com/questions/71001058/tkinter-upload-image-and-save-it-to-local-directory
         shutil.copy(file_path, new_path)
-
         # Convert the uploaded image to RGB and save it back
-        uploaded_image = cv2.imread(new_path)
         # The code on how to convert an image to RGB format is derived from geeksforgeeks: https://www.geeksforgeeks.org/convert-bgr-and-rgb-with-python-opencv/
+        uploaded_image = cv2.imread(new_path)
         rgb_image = cv2.cvtColor(uploaded_image, cv2.COLOR_BGR2RGB)
-
-        # Use the RGB image directly
+        # Utilizes the RGB image directly
         images_list.append(rgb_image)
         image_names.append(os.path.splitext(image_name)[0])
         print(f"Uploaded and processed image: {image_name}")
 
-        user_option = input("Do you want to add more image? \n(press 'y' to add,\n press 'n' to exit,\n press any key to initiate face recognition): ").lower()
+        user_option = input("Do you want to add more image?\n Press 'y' to add)\n Press any key to main menu: ").lower()
         if user_option == 'y':
             window = Tk()
             window.withdraw()  # Hides the Tkinter window for better visual appearance
             upload_image()
             window.mainloop()
-        elif user_option == 'n':
-            print("The program will automatically refresh. Restart the program")
-            quit()
         else:
-            activate_face_recognition()
+            main()
 
     if not file_path:     
-        functionality_option = input("Image upload cancelled\nDo you want to proceed to face recognition? (y/n): ")
+        functionality_option = input("Image upload cancelled\n Do you want to try again? ('y' to proceed; any key to main menu): ").lower()
         if functionality_option.lower() == 'y':
-            activate_face_recognition()
+            upload_image()
         else:
-            print("Exiting the program.")
-            quit()
+            main()
 
 def activate_face_recognition():
     print("Face recognition activating...\nPlease wait")
@@ -77,7 +70,7 @@ def activate_face_recognition():
     encode_known_list = find_encodings(images_list)
     print("Encoding Complete")
   
-    # Structures and log user information in the CSV file specified
+    # Structures and log user informations in the CSV file specified
     def mark_attendance(person_name):
         header_list = ['Name', 'Time']
         name_list = []
@@ -133,8 +126,70 @@ def activate_face_recognition():
     # Release the webcam and close any open windows
     cv2.destroyAllWindows()
     webcam_feed.release()
-    print("Exited face recogntion. Proceed to the CSV file or to the next program")
-    quit()
+
+    print("Exited face recogntion. Attendance logged in successfully\n Going back to main menu...")
+    main()
+
+# Prompts the user to enter their full namee for profiling
+def user_full_name():
+    while True:
+        special_cases = ["-", "'", "."]
+        user_name = input("Enter your full name: ")
+        user_name = user_name.split()
+        name = (''.join(user_name))
+        if len(name) >= 2:
+            if any(elements in special_cases for elements in name) or name.isalpha():
+                    name = (' '.join(user_name))
+                    # Makes the first letters of the words capitalized
+                    name = name.title()
+                    profiles_list.append(name)
+                    return name
+            else:
+                print(f"Name contains invalid characters. Only letters, digits, and {special_cases} are allowed.")
+        else:
+            print("Enter a valid name")
+
+# Formats the input of the user within a txt file
+def text_format():
+    name = user_full_name()
+    return f"Name: {name}"
+
+# Creates a txt file
+def create_file_name():
+    while True:
+        print("The program will automatically convert the name into snake case")
+        user_input = input("What do you want to name your txt file?: ")
+        if user_input.isdigit():
+            print("Please enter a valid name (Pure numerical name is not allowed)")
+        else:
+            index_list = []
+            # Converts the name in a snake_case format if there's no occurrence of a number within the name
+            user_input = '_'.join(user_input.lower().split())
+            # Checks for the occurrence of a number within the name and stores its index
+            if any(num.isdigit() for num in user_input):
+                for index, inputs in enumerate(user_input):
+                    if inputs.isdigit():
+                        index_list.append(index)
+                # Adds an underscore in the index of the first number within the name using the smallest index from index_list
+                index_of_number = min(index_list)
+                for indices in range(len(user_input)):
+                    if indices == index_of_number:
+                        valid_name = user_input[:index_of_number] + "_" + user_input[index_of_number:]
+                        break
+            else:
+                valid_name = user_input
+            
+            valid_name = valid_name.replace("__", "_")
+            return valid_name
+
+# Coordinates all the functionalities of the txt editing functionality
+def txt_editing_functionality():
+    print("Please take note that the file and information inputted here can only be...\nACCESSED WHEN THE PROGRAM VALIDATED THE ATTENDANCE OF AN EXISTING PROFILE")
+    file_name = create_file_name()
+    # Temporarily stores the name of the txt file
+    file_list.append(file_name)
+    with open(f"{file_name}.txt", "a") as file:
+        file.write(text_format())
 
 # Coordinates all the functionalities of the program
 def main():
@@ -147,10 +202,10 @@ def main():
         images_list.append(current_image)
         image_names.append(os.path.splitext(file)[0])
     print(f"Existing image profiles: {image_names}")
-    print("If your name isn't on the list please\n 1) Add your image; otherwise,\n 2) Proceed to the program")
+    print("Please choose your desired option\n 1) If your name isn't on the list: Add your image; otherwise,\n 2) If your name isn't on the list please: Proceed to the face recognition\n 3) Create and edit a profiling file\n 4) Exit the program")
 
     while True:
-        user_input = input("Press the corresponding number of the option to proceed (1 or 2): ")
+        user_input = input("Press the corresponding number of the option to proceed (1 or 4): ")
         if user_input == '1':
             window = Tk()
             window.withdraw()  # Hides the Tkinter window for better visual appearance
@@ -158,6 +213,11 @@ def main():
             window.mainloop()
         elif user_input == '2':
             activate_face_recognition()
+        elif user_input == '3':
+            txt_editing_functionality()
+        elif user_input == '4':
+            print("User exited the program")
+            quit()
         else:
             print("please respond using only the specified")
         
