@@ -13,6 +13,9 @@ from tkinter import filedialog
 from tkinter import *
 import shutil
 import csv
+import random
+import string
+import time
 
 images_list, image_names, profiles_list, file_list  = [], [], [], []
 
@@ -130,7 +133,7 @@ def activate_face_recognition():
     print("Exited face recogntion. Attendance logged in successfully\n Going back to main menu...")
     main()
 
-# Prompts the user to enter their full namee for profiling
+# Prompts the user to enter their full name for profiling
 def user_full_name():
     while True:
         special_cases = ["-", "'", "."]
@@ -149,10 +152,23 @@ def user_full_name():
         else:
             print("Enter a valid name")
 
+# Prompts the user to enter their age for profiling
+def user_age():
+    while True:
+        try:
+            user_age = int(input("Enter age (input must be realistic): "))
+            if 0 < user_age <= 130:
+                return user_age
+            else:
+                print("Please enter a valid age")
+        except ValueError:
+            print("Enter a numerical input only")
+
 # Formats the input of the user within a txt file
 def text_format():
     name = user_full_name()
-    return f"Name: {name}"
+    age = user_age()
+    return f"Name: {name} | Age: {age}"
 
 # Creates a txt file
 def create_file_name():
@@ -191,9 +207,51 @@ def txt_editing_functionality():
     with open(f"{file_name}.txt", "a") as file:
         file.write(text_format())
 
+        while True:
+            user_option = input("Do you want to add more information?\n Press 'y' to proceed\n Press any key to go to main menu): ")
+            if user_option == 'y':
+                file.write(f"\n{text_format()}")
+            else:
+                main()
+
+# Idea for this function is from YT and was tailored to the neeeds of the program
+def access_security():
+    upper_case_letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    lower_case_letter = upper_case_letters.lower()
+    numbers = "".join(random.choices(string.digits, k=3)) 
+    special_symbols = "!@#$%^&*()_-><|/?:."
+    # Combine all parts, then shuffles it for maximum randomness
+    passcode = upper_case_letters + lower_case_letter + numbers + special_symbols
+    passcode_list = list(passcode)
+    random.shuffle(passcode_list)
+    # Limit the passcode into five characters
+    official_passcode = "".join(random.sample(passcode_list, 5))
+
+    available_attempts = 3 
+    while available_attempts > 0:
+        print(f"Please type in the given passcode: | {official_passcode} | to add your image to the directory")
+        user_passcode_attempt = input("Enter the passcode: ")
+        if user_passcode_attempt == official_passcode:
+            print("Access granted")
+            break 
+        else:
+            available_attempts -= 1
+            print(f"Wrong passcode. Attempts remaining: {available_attempts}")
+
+        if available_attempts == 0:
+            print("No more attempts left. Try again later.")
+            # Added a timer before the user can proceed to try again
+            time.sleep(3)
+            main()  
+
+    window = Tk()
+    window.withdraw()  # Hide Tkinter window for better appearance
+    upload_image()
+    window.mainloop() 
+
 # Coordinates all the functionalities of the program
 def main():
-    print("WELCOME! THIS IS A FACE RECOGNITION AND SECURITY MANAGEMENT PROGRAM")
+    print("WELCOME! THIS IS A FACE RECOGNITION AND FILE MANAGEMENT PROGRAM")
     # Reviews the images in the attendance_image directory
     path = 'attendance_images'
     my_list = os.listdir(path)
@@ -202,20 +260,24 @@ def main():
         images_list.append(current_image)
         image_names.append(os.path.splitext(file)[0])
     print(f"Existing image profiles: {image_names}")
-    print("Please choose your desired option\n 1) If your name isn't on the list: Add your image; otherwise,\n 2) If your name isn't on the list please: Proceed to the face recognition\n 3) Create and edit a profiling file\n 4) Exit the program")
+    print("Please choose an option:\n"
+      "1) If your name isn't on the list: Add your image.\n"
+      "2) if your name is on the list: Proceed to face recognition.\n"
+      "3) Create and edit a user profile.\n"
+      "4) View profiles.\n"
+      "5) Exit.")
 
     while True:
         user_input = input("Press the corresponding number of the option to proceed (1 or 4): ")
         if user_input == '1':
-            window = Tk()
-            window.withdraw()  # Hides the Tkinter window for better visual appearance
-            upload_image()
-            window.mainloop()
+            access_security()
         elif user_input == '2':
             activate_face_recognition()
         elif user_input == '3':
             txt_editing_functionality()
         elif user_input == '4':
+            pass
+        elif user_input == '5':
             print("User exited the program")
             quit()
         else:
