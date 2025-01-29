@@ -12,6 +12,7 @@ import os
 from tkinter import filedialog
 from tkinter import *
 import shutil
+import csv
 
 images_list = []
 image_names = []
@@ -35,15 +36,17 @@ def upload_image():
         image_names.append(os.path.splitext(image_name)[0])
         print(f"Uploaded and processed image: {image_name}")
 
-        user_option = input("Do you want to add more image? (press 'y' to add; any key to exit): ")
-        if user_option.lower() == 'y':
+        user_option = input("Do you want to add more image? \n(press 'y' to add,\n press 'n' to exit,\n press any key to initiate face recognition): ").lower()
+        if user_option == 'y':
             window = Tk()
             window.withdraw()  # Hides the Tkinter window for better visual appearance
             upload_image()
             window.mainloop()
-        else:
+        elif user_option == 'n':
             print("The program will automatically refresh. Restart the program")
             quit()
+        else:
+            activate_face_recognition()
 
     if not file_path:     
         functionality_option = input("Image upload cancelled\nDo you want to proceed to face recognition? (y/n): ")
@@ -76,16 +79,16 @@ def activate_face_recognition():
   
     # Structures and log user information in the CSV file specified
     def mark_attendance(person_name):
-        with open('Attendance.csv', 'r+') as f:
-            my_data_list = f.readlines()
-            name_list = []
-            for line in my_data_list:
-                entry = line.split(',')
-                name_list.append(entry[0])
+        header_list = ['Name', 'Time']
+        name_list = []
+        with open('attendance.csv', 'w', newline='') as f:
+            writer = csv.DictWriter(f, delimiter=',', fieldnames=header_list)
+            writer.writeheader()
             if person_name not in name_list:
                 now = datetime.now()
                 date_string = now.strftime('%H:%M:%S')
-                f.writelines(f'\n{person_name},{date_string}')
+                name_list.append(person_name)
+                writer.writerow({'Name': person_name, 'Time': date_string})
 
     webcam_feed = cv2.VideoCapture(0)
 
@@ -130,7 +133,8 @@ def activate_face_recognition():
     # Release the webcam and close any open windows
     cv2.destroyAllWindows()
     webcam_feed.release()
-    print("Exited face recogntion. Proceed to the CSV file ot to the next program")
+    print("Exited face recogntion. Proceed to the CSV file or to the next program")
+    quit()
 
 # Coordinates all the functionalities of the program
 def main():
@@ -145,17 +149,17 @@ def main():
     print(f"Existing image profiles: {image_names}")
     print("If your name isn't on the list please\n 1) Add your image; otherwise,\n 2) Proceed to the program")
 
-    user_input = input("Press the corresponding number of the option to proceed (1 or 2): ")
-    if user_input == '1':
-        window = Tk()
-        window.withdraw()  # Hides the Tkinter window for better visual appearance
-        upload_image()
-        window.mainloop()
-    elif user_input == '2':
-        activate_face_recognition()
-    else:
-        print("please respond using only the specified")
+    while True:
+        user_input = input("Press the corresponding number of the option to proceed (1 or 2): ")
+        if user_input == '1':
+            window = Tk()
+            window.withdraw()  # Hides the Tkinter window for better visual appearance
+            upload_image()
+            window.mainloop()
+        elif user_input == '2':
+            activate_face_recognition()
+        else:
+            print("please respond using only the specified")
         
-
 main()
 
