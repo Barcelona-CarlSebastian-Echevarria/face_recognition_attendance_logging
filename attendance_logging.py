@@ -1,8 +1,14 @@
-# Will serve as the security gate in order for the user to access the program they created
-# The user is first noticed to upload their images within a file for program's reference. For instance, the "attendance_images" file
+# Will serve as the security gate in order for the user to access the file they created
+# The user is first noticed about the 4 main functionalities of the program: upload image, attendance logging, txt file creation, and txt viewing
+# Added: The program have the capability to convert an image to RGB format
 # The program then logs the name and time, the user appeared in the program
-# The csv file generated here will be used by another program in order for the user to access the main body of information they inputted
-# Not yet official, add a functionality to let the user upload his/her own picture
+# The csv file generated here will be used in order for the user to access the main body of information they inputted
+# The program accounted for errors that may arise during the program execution
+# Important: Previous projects such as file edit and view are incorporated in this program
+# Added: a functionality to let the user upload his/her own picture using Tkinter
+# Added: security features such as passcode, face recognition, and record matching were utilized to protect user info
+# Added: a functionality that let's the user create a txt file and input information there
+# Added: a functionality to view the txt file created by other users
 
 import cv2
 import numpy as nps
@@ -17,7 +23,8 @@ import random
 import string
 import time
 
-images_list, image_names, profiles_list, file_list  = [], [], [], []
+images_list, image_names, file_list  = [], [], []
+file_csv = "attendance.csv"
 
 # Idea for this function is from YT and was tailored to the neeeds of the program
 def upload_image_security():
@@ -54,6 +61,7 @@ def upload_image_security():
     upload_image()
     window.mainloop() 
 
+# Allows the user to upload a reference RGB image for the program to recognize
 def upload_image():
     file_path = filedialog.askopenfilename(title = "Select image: Make sure it's named accordingly",filetypes = (("jpg files","*jpg"),("all files","*.*")))
     if file_path:
@@ -87,6 +95,7 @@ def upload_image():
         else:
             main()
 
+# Initiate a face recognition scan to the user to logged the attendance to the csv file
 def activate_face_recognition():
     print("Face recognition activating...\nPlease wait")
     match_found = False # Will be used to determine if the user can view the information logged in
@@ -126,7 +135,11 @@ def activate_face_recognition():
 
     # Processes the webcam feed for identifying person and logging in the CSV file
     while True:
+        match_found = False
         success, frame = webcam_feed.read()
+        if not success:
+            print("Error: No knwon person has been identified")
+            continue
         # # Resizes the images to 25%
         frame_resized = cv2.resize(frame,(0,0),None,0.25,0.25)
         frame_resized = cv2.cvtColor(frame_resized,cv2.COLOR_BGR2RGB)
@@ -183,7 +196,6 @@ def user_full_name():
                     name = (' '.join(user_name))
                     # Makes the first letters of the words capitalized
                     name = name.title()
-                    profiles_list.append(name)
                     return name
             else:
                 print(f"Name contains invalid characters. Only letters, digits, and {special_cases} are allowed.")
@@ -269,8 +281,49 @@ def txt_editing_functionality():
     
     main()
 
-# Allows the user to view the information logged in; user has to be logged in to the attendance.csv first
-def file_viewer():
+# Opens the inputted txt file and let's the user view all its contents
+def file_viewer_functionality():
+    if len(file_list) == 0:
+        print("No file has been added yet. Go to file editor first. Sending you to main menu")
+        main()
+    else:
+        print("Please choose which text file would you like to open? (type 'n' to main menu): ")
+        for index, value in enumerate(file_list):
+            print(f"{index + 1}. {value}")
+
+        while True: 
+            user_choice = input("You may type its corresponding number or its value: ")
+            if user_choice.isdigit():
+                user_choice = int(user_choice)
+                if 1 <= user_choice <= len(file_list):
+                        view_file = file_list[user_choice - 1]
+                        break
+                else:
+                    print("Invalid number. Please enter a valid file number.")
+            elif user_choice in file_list:
+                view_file = user_choice
+                break
+            elif user_choice.lower() == "n":
+                print("Returning to main menu...")
+                main()
+            else:
+                print("Invalid input. Please enter a valid number or filename.")
+   
+    open_file = f"{view_file}.txt"
+    try:
+        with open(open_file, "r") as f:
+            # Realized by using enumerate, you don't have to use readline()
+            for row_number, row_contents in enumerate(f, 1): # The "1" here is used to start the counting in index 1 
+                print("Important: System will automatically return to main menu after displaying the information")
+                time.sleep(3)
+                print(f"{row_number}: {row_contents.strip()}")
+                time.sleep(3)
+                return main()
+    except FileNotFoundError:
+        print(f"Error: {open_file} not found")
+
+# Give the user attempts to access the information logged in; user has to be logged in to the attendance.csv first
+def file_viewer_security():
     print("Verification is needed in order to access user information logged in the program\n"
           "Two verification options are available:\n"
           "1. Input the image name you used in the image directory?\n"
@@ -284,16 +337,17 @@ def file_viewer():
             main()
         elif user_response == "1":
             data = []
-            file_csv = "attendance.csv"
             try:
                 with open(file_csv, 'r') as f:
+                    # Utilized list comprehension for data appending
+                    # The idea was from combination of YT and internet resources, and tailored according to the program's needs
                     data = [line[0] for line in csv.reader(f)]
 
                     while access_attempts > 0:
                         picture_name = input("Please enter the name of your image in the attendance images directory: ")
                         if picture_name in data:
                             print("Access granted")
-                            # Insert function here
+                            return file_viewer_functionality()
                         else:
                             access_attempts -= 1
                             print(f"ACCESS DENIED\nNotice: Name not logged in the attendance.csv file\nAccess attempts remaining: {access_attempts}")
@@ -310,7 +364,7 @@ def file_viewer():
             verdict = activate_face_recognition()
             if verdict:
                 print("Access granted")
-                # Insert function here
+                return file_viewer_functionality()
             if not verdict:
                 access_attempts -= 1
                 print(f"ACCESS DENIED\nFace not recognized\nAccess attempts remaining: {access_attempts}")
@@ -320,6 +374,7 @@ def file_viewer():
                    main()
         else:
             print("Invalid input. Please select either '1', '2', or 'n'")
+        
 
 # Coordinates all the functionalities of the program
 def main():
@@ -340,7 +395,7 @@ def main():
       "5) Exit.")
 
     while True:
-        user_input = input("Press the corresponding number of the option to proceed (1 or 4): ")
+        user_input = input("Press the corresponding number of the option to proceed (1 or 5): ")
         if user_input == '1':
             upload_image_security()
         elif user_input == '2':
@@ -350,7 +405,7 @@ def main():
         elif user_input == '3':
             txt_editing_functionality()
         elif user_input == '4':
-            file_viewer()
+            file_viewer_security()
         elif user_input == '5':
             print("User exited the program")
             quit()
